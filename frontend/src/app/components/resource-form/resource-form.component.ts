@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Resource, STORY_STATUSES } from '../../models/resource.model';
+import { Resource, Task, STORY_STATUSES, emptyTask } from '../../models/resource.model';
 import { ResourceService } from '../../services/resource.service';
 
 @Component({
@@ -25,29 +25,42 @@ export class ResourceFormComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.resource) {
-      this.form = { ...this.resource };
+      this.form = this.resource;
+      if (!this.form.tasks || this.form.tasks.length === 0) {
+        this.form.tasks = [emptyTask()];
+      }
       this.isEdit = true;
     }
   }
 
   blank(): Resource {
-    return {
-      name: '', role: '', task: '', project: '',
-      storyStatus: 'In Progress', endDate: null, daysUntilFree: null
-    };
+    return { name: '', role: '', project: '', tasks: [emptyTask()] };
   }
 
-  onEndDateChange(): void {
-    if (this.form.endDate && this.form.daysUntilFree === null) {
+  addTask(): void {
+    this.form.tasks.push(emptyTask());
+  }
+
+  removeTask(i: number): void {
+    this.form.tasks.splice(i, 1);
+    if (this.form.tasks.length === 0) this.form.tasks.push(emptyTask());
+  }
+
+  onEndDateChange(t: Task): void {
+    if (t.endDate) {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      const end = new Date(this.form.endDate);
+      const end = new Date(t.endDate);
       const diff = Math.round((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      this.form.daysUntilFree = Math.max(0, diff);
+      t.daysUntilFree = Math.max(0, diff);
     }
   }
 
   save(): void {
     if (!this.form.name?.trim()) return;
+    // drop empty task rows
+    this.form.tasks = this.form.tasks.filter(t => t.task && t.task.trim());
+    if (this.form.tasks.length === 0) this.form.tasks = [emptyTask()];
+
     this.saving = true;
     const obs = this.isEdit
       ? this.svc.update(this.form.id!, this.form)

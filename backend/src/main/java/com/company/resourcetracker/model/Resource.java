@@ -6,8 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "resources")
@@ -27,23 +28,11 @@ public class Resource {
     @Column(length = 100)
     private String role;
 
-    @Column(length = 255)
-    private String task;
-
     @Column(length = 100)
     private String project;
 
-    @Column(name = "story_status", length = 50)
-    private String storyStatus = "In Progress";
-
-    @Column(name = "end_date")
-    private LocalDate endDate;
-
-    @Column(name = "days_until_free")
-    private Integer daysUntilFree;
-
-    @Column(name = "availability_status", length = 50)
-    private String availabilityStatus;
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<Task> tasks = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -55,28 +44,19 @@ public class Resource {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        computeAvailability();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        computeAvailability();
     }
 
-    private void computeAvailability() {
-        if (endDate != null) {
-            long days = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), endDate);
-            this.daysUntilFree = (int) Math.max(0, days);
-        }
-        if (daysUntilFree == null) {
-            availabilityStatus = "Free";
-        } else if (daysUntilFree >= 6) {
-            availabilityStatus = "Busy";
-        } else if (daysUntilFree >= 1) {
-            availabilityStatus = "Almost Free";
-        } else {
-            availabilityStatus = "Free";
+    // Link each task back to this resource before saving
+    public void linkTasks() {
+        if (tasks != null) {
+            for (Task t : tasks) {
+                t.setResource(this);
+            }
         }
     }
 }

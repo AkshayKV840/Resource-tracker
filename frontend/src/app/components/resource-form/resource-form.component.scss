@@ -67,6 +67,67 @@
   }
 }
 
+.tasks-section {
+  margin-top: 4px;
+}
+
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.add-task-btn {
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #333;
+
+  &:hover { background: #e8e8e8; }
+}
+
+.task-block {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #fafafa;
+}
+
+.task-block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  .task-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+  }
+}
+
+.remove-task-btn {
+  background: transparent;
+  border: none;
+  color: #c0392b;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+
+  &:hover { color: #e74c3c; }
+}
+
 .modal-actions {
   display: flex;
   gap: 8px;

@@ -2,48 +2,24 @@
   <div class="header">
     <div class="header-left">
       <h1>Resource Availability Tracker</h1>
-      <p class="meta">Last Updated: {{ today }} &nbsp;|&nbsp; Total Resources: {{ stats.total }}</p>
+      <p class="meta">Last Updated: {{ today }} &nbsp;|&nbsp; Total Resources: {{ resources.length }}</p>
     </div>
     <div class="header-actions">
-      <button class="btn" (click)="openAdd()">
-        <span class="icon">+</span> Add Resource
-      </button>
-      <button class="btn" (click)="exportCSV()">
-        <span class="icon">↓</span> Export CSV
-      </button>
-      <button class="btn" (click)="printReport()">
-        <span class="icon">⎙</span> Print Report
-      </button>
+      <button class="btn" (click)="openAdd()"><span class="icon">+</span> Add Resource</button>
+      <button class="btn" (click)="exportCSV()"><span class="icon">&#8595;</span> Export CSV</button>
+      <button class="btn" (click)="printReport()"><span class="icon">&#9113;</span> Print Report</button>
     </div>
   </div>
 
   <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Total</div>
-      <div class="stat-val">{{ stats.total }}</div>
-    </div>
-    <div class="stat-card busy-card">
-      <div class="stat-label">Busy</div>
-      <div class="stat-val">{{ stats.busy }}</div>
-    </div>
-    <div class="stat-card almost-card">
-      <div class="stat-label">Almost Free</div>
-      <div class="stat-val">{{ stats.almostFree }}</div>
-    </div>
-    <div class="stat-card free-card">
-      <div class="stat-label">Free</div>
-      <div class="stat-val">{{ stats.free }}</div>
-    </div>
+    <div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-val">{{ stats.total }}</div></div>
+    <div class="stat-card busy-card"><div class="stat-label">Busy</div><div class="stat-val">{{ stats.busy }}</div></div>
+    <div class="stat-card almost-card"><div class="stat-label">Almost Free</div><div class="stat-val">{{ stats.almostFree }}</div></div>
+    <div class="stat-card free-card"><div class="stat-label">Free</div><div class="stat-val">{{ stats.free }}</div></div>
   </div>
 
   <div class="filter-row">
-    <input
-      type="text"
-      placeholder="Search by name, role, task…"
-      [(ngModel)]="searchTerm"
-      (input)="onSearch()"
-      class="search-input"
-    />
+    <input type="text" placeholder="Search by name, role, task…" [(ngModel)]="searchTerm" (input)="onSearch()" class="search-input" />
     <select [(ngModel)]="filterStatus" (change)="onFilter()" class="filter-select">
       <option value="">All Statuses</option>
       <option value="Busy">Busy</option>
@@ -73,25 +49,26 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngIf="loading">
-          <td colspan="10" class="empty">Loading…</td>
-        </tr>
-        <tr *ngIf="!loading && resources.length === 0">
-          <td colspan="10" class="empty">No resources found. Add one to get started.</td>
-        </tr>
-        <tr *ngFor="let r of resources; let i = index">
-          <td class="muted">{{ i + 1 }}</td>
-          <td class="name-cell">{{ r.name }}</td>
-          <td class="muted">{{ r.role }}</td>
-          <td>{{ r.task }}</td>
-          <td>{{ r.project }}</td>
-          <td><span class="badge in-progress">{{ r.storyStatus }}</span></td>
-          <td class="nowrap">{{ r.endDate | date:'dd-MMM-yy' }}</td>
-          <td class="center bold">{{ r.daysUntilFree ?? '—' }}</td>
-          <td><span [class]="availabilityClass(r.availabilityStatus || '')">{{ r.availabilityStatus }}</span></td>
-          <td class="actions-cell">
-            <button class="icon-btn" (click)="openEdit(r)" title="Edit">✎</button>
-            <button class="icon-btn danger" (click)="deleteResource(r)" title="Delete">✕</button>
+        <tr *ngIf="loading"><td colspan="10" class="empty">Loading…</td></tr>
+        <tr *ngIf="!loading && rows.length === 0"><td colspan="10" class="empty">No resources found. Add one to get started.</td></tr>
+
+        <tr *ngFor="let row of rows" [class.person-start]="row.isFirst">
+          <td *ngIf="row.isFirst" [attr.rowspan]="row.rowspan" class="muted grouped">{{ row.index }}</td>
+          <td *ngIf="row.isFirst" [attr.rowspan]="row.rowspan" class="name-cell grouped">{{ row.resource.name }}</td>
+          <td *ngIf="row.isFirst" [attr.rowspan]="row.rowspan" class="muted grouped">{{ row.resource.role }}</td>
+
+          <td>{{ row.task.task }}</td>
+
+          <td *ngIf="row.isFirst" [attr.rowspan]="row.rowspan" class="grouped">{{ row.resource.project }}</td>
+
+          <td><span class="badge in-progress" *ngIf="row.task.storyStatus">{{ row.task.storyStatus }}</span></td>
+          <td class="nowrap">{{ fmtDate(row.task.endDate) }}</td>
+          <td class="center bold">{{ row.task.daysUntilFree ?? '—' }}</td>
+          <td><span [class]="availabilityClass(row.task.availabilityStatus)">{{ row.task.availabilityStatus }}</span></td>
+
+          <td *ngIf="row.isFirst" [attr.rowspan]="row.rowspan" class="actions-cell grouped">
+            <button class="icon-btn" (click)="openEdit(row.resource)" title="Edit">&#9998;</button>
+            <button class="icon-btn danger" (click)="deleteResource(row.resource)" title="Delete">&#10005;</button>
           </td>
         </tr>
       </tbody>

@@ -141,6 +141,12 @@ table {
 .center { text-align: center; }
 .bold { font-weight: 600; }
 
+.grouped { vertical-align: middle; }
+
+tr.person-start td {
+  border-top: 2px solid #e0e0e0;
+}
+
 .badge {
   display: inline-block;
   padding: 2px 9px;

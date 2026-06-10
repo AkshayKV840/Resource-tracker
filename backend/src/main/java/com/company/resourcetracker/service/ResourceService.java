@@ -1,6 +1,7 @@
 package com.company.resourcetracker.service;
 
 import com.company.resourcetracker.model.Resource;
+import com.company.resourcetracker.model.Task;
 import com.company.resourcetracker.repository.ResourceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +22,20 @@ public class ResourceService {
     }
 
     public List<Resource> filter(String search, String status, String project) {
-        String s = (search != null && !search.isBlank()) ? search : null;
+        String s = (search != null && !search.isBlank()) ? search.toLowerCase() : null;
         String st = (status != null && !status.isBlank()) ? status : null;
         String p = (project != null && !project.isBlank()) ? project : null;
-        return repository.findByFilters(s, st, p);
+
+        return repository.findAll().stream().filter(r -> {
+            boolean matchSearch = s == null
+                || (r.getName() != null && r.getName().toLowerCase().contains(s))
+                || (r.getRole() != null && r.getRole().toLowerCase().contains(s))
+                || r.getTasks().stream().anyMatch(t -> t.getTask() != null && t.getTask().toLowerCase().contains(s));
+            boolean matchProject = p == null || p.equals(r.getProject());
+            boolean matchStatus = st == null
+                || r.getTasks().stream().anyMatch(t -> st.equals(t.getAvailabilityStatus()));
+            return matchSearch && matchProject && matchStatus;
+        }).collect(Collectors.toList());
     }
 
     public Optional<Resource> getById(Long id) {
@@ -32,6 +44,7 @@ public class ResourceService {
 
     public Resource create(Resource resource) {
         resource.setId(null);
+        resource.linkTasks();
         return repository.save(resource);
     }
 
@@ -39,11 +52,17 @@ public class ResourceService {
         return repository.findById(id).map(existing -> {
             existing.setName(updated.getName());
             existing.setRole(updated.getRole());
-            existing.setTask(updated.getTask());
             existing.setProject(updated.getProject());
-            existing.setStoryStatus(updated.getStoryStatus());
-            existing.setEndDate(updated.getEndDate());
-            existing.setDaysUntilFree(updated.getDaysUntilFree());
+
+            // Replace tasks
+            existing.getTasks().clear();
+            if (updated.getTasks() != null) {
+                for (Task t : updated.getTasks()) {
+                    t.setId(null);
+                    t.setResource(existing);
+                    existing.getTasks().add(t);
+                }
+            }
             return repository.save(existing);
         });
     }
@@ -61,10 +80,17 @@ public class ResourceService {
     }
 
     public Map<String, Long> getStats() {
-        List<Resource> all = repository.findAll();
-        long busy = all.stream().filter(r -> "Busy".equals(r.getAvailabilityStatus())).count();
-        long almostFree = all.stream().filter(r -> "Almost Free".equals(r.getAvailabilityStatus())).count();
-        long free = all.stream().filter(r -> "Free".equals(r.getAvailabilityStatus())).count();
-        return Map.of("total", (long) all.size(), "busy", busy, "almostFree", almostFree, "free", free);
+        List<Task> allTasks = repository.findAll().stream()
+            .flatMap(r -> r.getTasks().stream())
+            .collect(Collectors.toList());
+        long busy = allTasks.stream().filter(t -> "Busy".equals(t.getAvailabilityStatus())).count();
+        long almostFree = allTasks.stream().filter(t -> "Almost Free".equals(t.getAvailabilityStatus())).count();
+        long free = allTasks.stream().filter(t -> "Free".equals(t.getAvailabilityStatus())).count();
+        return Map.of(
+            "total", (long) allTasks.size(),
+            "busy", busy,
+            "almostFree", almostFree,
+            "free", free
+        );
     }
 }

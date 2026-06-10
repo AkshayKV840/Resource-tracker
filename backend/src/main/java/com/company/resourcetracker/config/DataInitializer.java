@@ -1,12 +1,14 @@
 package com.company.resourcetracker.config;
 
 import com.company.resourcetracker.model.Resource;
+import com.company.resourcetracker.model.Task;
 import com.company.resourcetracker.repository.ResourceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -17,31 +19,57 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (repository.count() > 0) return; // skip if data already exists
+        if (repository.count() > 0) return;
 
-        repository.saveAll(List.of(
-            build("Akshay Khobragade",  "Module Lead",                   "TFR-2463- Pan and CUST changes",      "Kanban", LocalDate.of(2026,6,19)),
-            build("Binson Selvin",       "Senior Software Engineer",       "TFR-2463- Pan and CUST changes",      "Kanban", LocalDate.of(2026,6,19)),
-            build("Arbaz Shaikh",        "Frontend Dev",                   "TFR-2486- White label",               "Kanban", LocalDate.of(2026,6,12)),
-            build("Anis Shah",           "Associate Software Engineer",    "TEPM-17331",                          "Kanban", LocalDate.of(2026,6,4)),
-            build("Sheeba Shaikh",       "Intern",                         "TFR-2463- Pan and CUST changes",      "Kanban", LocalDate.of(2026,6,19)),
-            build("Mohit Jangale",       "Intern",                         "TFR-2486- White label",               "Kanban", LocalDate.of(2026,6,12)),
-            build("Akshay Pokale",       "Associate Software Engineer",    "TRAN-4152- DB Credit walkthrough",    "Kanban", LocalDate.of(2026,6,16)),
-            build("Shailee Baxi",        "Lead QA",                        "TFR-2486- White label",               "Kanban", LocalDate.of(2026,6,16)),
-            build("Qurratul Aein",       "QA Engineer",                    "TFR-998",                             "Kanban", LocalDate.of(2026,6,10)),
-            build("Karishma Wankhade",   "QA Engineer",                    "TFR-2913",                            "Kanban", LocalDate.of(2026,6,10)),
-            build("Yogita Dhondge",      "QA Engineer",                    "Escrow Automation",                   "Kanban", LocalDate.of(2026,6,19))
-        ));
+        List<Resource> seed = new ArrayList<>();
+
+        seed.add(person("Akshay Khobragade", "Module Lead", "Kanban",
+            task("TFR-2463- Pan and CUST changes", LocalDate.of(2026,6,19)),
+            task("TFR-2486- White label", LocalDate.of(2026,6,19))));
+        seed.add(person("Binson Selvin", "Senior Software Engineer", "Kanban",
+            task("TFR-2463- Pan and CUST changes", LocalDate.of(2026,6,19))));
+        seed.add(person("Arbaz Shaikh", "Frontend Dev", "Kanban",
+            task("TFR-2486- White label", LocalDate.of(2026,6,12))));
+        seed.add(person("Anis Shah", "Associate Software Engineer", "Kanban",
+            task("TEPM-17331", LocalDate.of(2026,6,4)),
+            task("TRAN-4151", LocalDate.of(2026,6,4))));
+        seed.add(person("Sheeba Shaikh", "Intern", "Kanban",
+            task("TFR-2463- Pan and CUST changes", LocalDate.of(2026,6,19))));
+        seed.add(person("Mohit Jangale", "Intern", "Kanban",
+            task("TFR-2486- White label", LocalDate.of(2026,6,12))));
+        seed.add(person("Akshay Pokale", "Associate Software Engineer", "Kanban",
+            task("TRAN-4152- DB Credit walkthrough", LocalDate.of(2026,6,16))));
+        seed.add(person("Shailee Baxi", "Lead QA", "Kanban",
+            task("TFR-2486- White label", LocalDate.of(2026,6,16))));
+        seed.add(person("Qurratul Aein", "QA Engineer", "Kanban",
+            task("TFR-998", LocalDate.of(2026,6,10))));
+        seed.add(person("Karishma Wankhade", "QA Engineer", "Kanban",
+            task("TFR-2913", LocalDate.of(2026,6,10))));
+        seed.add(person("Yogita Dhondge", "QA Engineer", "Kanban",
+            task("Escrow Automation", LocalDate.of(2026,6,19))));
+
+        repository.saveAll(seed);
     }
 
-    private Resource build(String name, String role, String task, String project, LocalDate endDate) {
+    private Resource person(String name, String role, String project, Task... tasks) {
         Resource r = new Resource();
         r.setName(name);
         r.setRole(role);
-        r.setTask(task);
         r.setProject(project);
-        r.setStoryStatus("In Progress");
-        r.setEndDate(endDate);
+        List<Task> list = new ArrayList<>();
+        for (Task t : tasks) {
+            t.setResource(r);
+            list.add(t);
+        }
+        r.setTasks(list);
         return r;
+    }
+
+    private Task task(String name, LocalDate endDate) {
+        Task t = new Task();
+        t.setTask(name);
+        t.setStoryStatus("In Progress");
+        t.setEndDate(endDate);
+        return t;
     }
 }
