@@ -1,0 +1,64 @@
+# =============================================================
+#  Render Blueprint — Resource Availability Tracker
+#  Docs: https://render.com/docs/blueprint-spec
+#
+#  HOW TO DEPLOY:
+#  1. Push this repo to GitHub (public or private)
+#  2. Go to https://dashboard.render.com/new/blueprint
+#  3. Connect your GitHub repo — Render detects this file
+#  4. Click "Apply" — all three services spin up automatically
+#  5. Share the frontend URL with your team
+# =============================================================
+
+databases:
+  - name: resource-tracker-db
+    databaseName: resource_tracker
+    user: rt_user
+    plan: free                  # Free tier: 1GB, 90-day limit (see note below)
+    region: singapore           # Change to: oregon, ohio, virginia, frankfurt, etc.
+
+services:
+
+  # -----------------------------------------------------------
+  #  Backend — Spring Boot
+  # -----------------------------------------------------------
+  - type: web
+    name: resource-tracker-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    region: singapore           # Must match database region
+    plan: free
+    healthCheckPath: /api/resources/stats
+    envVars:
+      - key: DB_URL
+        value: jdbc:mysql://$(resource-tracker-db.host):$(resource-tracker-db.port)/$(resource-tracker-db.database)?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - key: DB_USERNAME
+        value: $(resource-tracker-db.user)
+      - key: DB_PASSWORD
+        value: $(resource-tracker-db.password)
+      - key: PORT
+        value: 8080
+      - key: CORS_ORIGINS
+        # Render sets the frontend URL automatically at build time
+        fromService:
+          type: web
+          name: resource-tracker-frontend
+          property: host
+          transform: "https://{value}"
+
+  # -----------------------------------------------------------
+  #  Frontend — Angular (served via Nginx)
+  # -----------------------------------------------------------
+  - type: web
+    name: resource-tracker-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    region: singapore
+    plan: free
+    envVars:
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: resource-tracker-backend
+          property: host
+          transform: "https://{value}"

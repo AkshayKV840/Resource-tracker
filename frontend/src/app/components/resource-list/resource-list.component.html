@@ -1,0 +1,107 @@
+<div class="tracker-wrap">
+  <div class="header">
+    <div class="header-left">
+      <h1>Resource Availability Tracker</h1>
+      <p class="meta">Last Updated: {{ today }} &nbsp;|&nbsp; Total Resources: {{ stats.total }}</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" (click)="openAdd()">
+        <span class="icon">+</span> Add Resource
+      </button>
+      <button class="btn" (click)="exportCSV()">
+        <span class="icon">↓</span> Export CSV
+      </button>
+      <button class="btn" (click)="printReport()">
+        <span class="icon">⎙</span> Print Report
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card busy-card">
+      <div class="stat-label">Busy</div>
+      <div class="stat-val">{{ stats.busy }}</div>
+    </div>
+    <div class="stat-card almost-card">
+      <div class="stat-label">Almost Free</div>
+      <div class="stat-val">{{ stats.almostFree }}</div>
+    </div>
+    <div class="stat-card free-card">
+      <div class="stat-label">Free</div>
+      <div class="stat-val">{{ stats.free }}</div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <input
+      type="text"
+      placeholder="Search by name, role, task…"
+      [(ngModel)]="searchTerm"
+      (input)="onSearch()"
+      class="search-input"
+    />
+    <select [(ngModel)]="filterStatus" (change)="onFilter()" class="filter-select">
+      <option value="">All Statuses</option>
+      <option value="Busy">Busy</option>
+      <option value="Almost Free">Almost Free</option>
+      <option value="Free">Free</option>
+    </select>
+    <select [(ngModel)]="filterProject" (change)="onFilter()" class="filter-select">
+      <option value="">All Projects</option>
+      <option *ngFor="let p of projects" [value]="p">{{ p }}</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Resource Name</th>
+          <th>Role / Designation</th>
+          <th>Current Story / Task</th>
+          <th>Sprint / Project</th>
+          <th>Story Status</th>
+          <th>Est. End Date</th>
+          <th>Days Until Free</th>
+          <th>Availability</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td colspan="10" class="empty">Loading…</td>
+        </tr>
+        <tr *ngIf="!loading && resources.length === 0">
+          <td colspan="10" class="empty">No resources found. Add one to get started.</td>
+        </tr>
+        <tr *ngFor="let r of resources; let i = index">
+          <td class="muted">{{ i + 1 }}</td>
+          <td class="name-cell">{{ r.name }}</td>
+          <td class="muted">{{ r.role }}</td>
+          <td>{{ r.task }}</td>
+          <td>{{ r.project }}</td>
+          <td><span class="badge in-progress">{{ r.storyStatus }}</span></td>
+          <td class="nowrap">{{ r.endDate | date:'dd-MMM-yy' }}</td>
+          <td class="center bold">{{ r.daysUntilFree ?? '—' }}</td>
+          <td><span [class]="availabilityClass(r.availabilityStatus || '')">{{ r.availabilityStatus }}</span></td>
+          <td class="actions-cell">
+            <button class="icon-btn" (click)="openEdit(r)" title="Edit">✎</button>
+            <button class="icon-btn danger" (click)="deleteResource(r)" title="Delete">✕</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-resource-form
+  *ngIf="showForm"
+  [resource]="selectedResource"
+  (saved)="onSaved()"
+  (cancelled)="onCancelled()"
+></app-resource-form>

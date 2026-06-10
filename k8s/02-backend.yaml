@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-tracker-backend
+  namespace: resource-tracker
+  labels:
+    app: resource-tracker-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: resource-tracker-backend
+  template:
+    metadata:
+      labels:
+        app: resource-tracker-backend
+    spec:
+      containers:
+        - name: backend
+          image: your-ecr-repo/resource-tracker-backend:latest  # CHANGE THIS
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            # Tell Spring Boot to load the mounted properties file
+            - name: SPRING_CONFIG_LOCATION
+              value: "classpath:/,file:/config/application-prod.properties"
+            # DB credentials from Secret (override properties file values)
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: resource-tracker-db-secret
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: resource-tracker-db-secret
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: app-config
+              mountPath: /config
+              readOnly: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /api/resources/stats
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/resources/stats
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+      volumes:
+        - name: app-config
+          configMap:
+            name: resource-tracker-config
+            items:
+              - key: application-prod.properties
+                path: application-prod.properties
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: resource-tracker-backend
+  namespace: resource-tracker
+spec:
+  selector:
+    app: resource-tracker-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,52 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h2>{{ isEdit ? 'Edit Resource' : 'Add Resource' }}</h2>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Resource Name *</label>
+        <input [(ngModel)]="form.name" placeholder="e.g. Akshay Khobragade" required />
+      </div>
+      <div class="field">
+        <label>Role / Designation</label>
+        <input [(ngModel)]="form.role" placeholder="e.g. Module Lead" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Current Story / Task</label>
+      <input [(ngModel)]="form.task" placeholder="e.g. TFR-2463- Pan and CUST changes" />
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Sprint / Project</label>
+        <input [(ngModel)]="form.project" placeholder="e.g. Kanban" />
+      </div>
+      <div class="field">
+        <label>Story Status</label>
+        <select [(ngModel)]="form.storyStatus">
+          <option *ngFor="let s of storyStatuses" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Estimated End Date</label>
+        <input type="date" [(ngModel)]="form.endDate" (change)="onEndDateChange()" />
+      </div>
+      <div class="field">
+        <label>Days Until Free</label>
+        <input type="number" [(ngModel)]="form.daysUntilFree" min="0" placeholder="Auto-calculated" />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn cancel-btn" (click)="cancel()">Cancel</button>
+      <button class="btn save-btn" (click)="save()" [disabled]="saving || !form.name?.trim()">
+        {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </div>
+</div>
