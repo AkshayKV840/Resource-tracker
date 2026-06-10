@@ -18,6 +18,7 @@ services:
     name: resource-tracker-backend
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     region: singapore
     plan: free
     healthCheckPath: /api/resources/stats
@@ -38,6 +39,7 @@ services:
     name: resource-tracker-frontend
     runtime: docker
     dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
     region: singapore
     plan: free
     envVars:
