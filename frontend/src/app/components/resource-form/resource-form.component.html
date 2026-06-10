@@ -14,8 +14,9 @@
     </div>
 
     <div class="field">
-      <label>Current Story / Task</label>
-      <input [(ngModel)]="form.task" placeholder="e.g. TFR-2463- Pan and CUST changes" />
+      <label>Current Story / Task <span class="hint">(separate multiple tasks with a comma)</span></label>
+      <textarea [(ngModel)]="form.task" rows="2"
+                placeholder="e.g. TFR-2463- Pan and CUST changes, TFR-2486- White label"></textarea>
     </div>
 
     <div class="form-grid">
