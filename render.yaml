@@ -43,5 +43,5 @@ services:
     region: singapore
     plan: free
     envVars:
-      - key: BACKEND_URL
-        value: "https://resource-tracker-backend.onrender.com"
+      - key: BACKEND_HOST
+        value: "resource-tracker-backend.onrender.com"
